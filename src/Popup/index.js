@@ -3,6 +3,23 @@ const runTimeHandler = typeof browser === "undefined"?chrome:browser;
 const toggleBtn = document.getElementById('toggleBtn');
 const toggleOnDefaultCheckbox = document.getElementById('toggleReadingMode');
 const saccadesIntervalSlider = document.getElementById('saccadesSlider');
+const blacklistTextInput = document.getElementById('blacklistTextInput');
+const tagContainer = document.getElementById('tagContainer');
+
+// We need to listen to changes to the tag list so that we can update
+// the underlying chrome storage accordingly
+const config = { childList: true };
+const listenToTagChanges = (mutationList, _observer) => {
+  for (const mutation of mutationList) {
+    // TODO: update chrome storage here
+    if (mutation.type === 'childList') {
+      console.log("Tag list changed");
+    }
+  }
+};
+
+const observer = new MutationObserver(listenToTagChanges);
+observer.observe(tagContainer, config);
 
 runTimeHandler.runtime.sendMessage(
   { message: "getSaccadesInterval" },
@@ -45,6 +62,24 @@ toggleBtn.addEventListener('click', async () => {
       }
     );
   });
+});
+
+const removeTag = (event) => {
+  event.target.remove();
+};
+
+blacklistTextInput.addEventListener('keydown', async (event) => {
+  // Add a new tag when the enter is pressed.
+  if (event.key === "Enter") {
+    const tagContainer = document.getElementById("tagContainer");
+    var newTag = document.createElement('span');
+    newTag.className = "tag"
+    newTag.innerHTML = blacklistTextInput.value;
+    newTag.addEventListener('click', removeTag);
+    tagContainer.appendChild(newTag);
+
+    blacklistTextInput.value = "";
+  }
 });
 
 toggleOnDefaultCheckbox.addEventListener('change', async (event) => {
